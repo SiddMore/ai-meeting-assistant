@@ -2,16 +2,24 @@ from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sess
 from sqlalchemy.orm import DeclarativeBase
 from app.core.config import settings
 
-# when using SQLite in-memory during tests the pool options trigger errors
-# so we only pass them for non-SQLite URLs
+# pool options for production
 engine_kwargs = {
     "pool_pre_ping": True,
     "echo": settings.DEBUG,
 }
+
 if not settings.DATABASE_URL.startswith("sqlite"):
     engine_kwargs.update({"pool_size": 10, "max_overflow": 20})
 
-engine = create_async_engine(settings.DATABASE_URL, **engine_kwargs)
+# --- THE FIX STARTS HERE ---
+db_url = settings.DATABASE_URL
+if db_url.startswith("postgres://"):
+    db_url = db_url.replace("postgres://", "postgresql+asyncpg://", 1)
+elif db_url.startswith("postgresql://") and "+asyncpg" not in db_url:
+    db_url = db_url.replace("postgresql://", "postgresql+asyncpg://", 1)
+
+engine = create_async_engine(db_url, **engine_kwargs)
+# --- THE FIX ENDS HERE ---
 
 AsyncSessionLocal = async_sessionmaker(
     bind=engine,
