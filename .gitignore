@@ -1,0 +1,65 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+env/
+
+# Environment files — NEVER commit these
+server/.env
+client/.env.local
+.env
+
+# Node
+node_modules/
+.next/
+out/
+npm-debug.log*
+yarn-debug.log*
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker
+*.log
+
+# Database
+*.sqlite3
+
+# Alembic
+server/alembic/versions/*.pyc
+
+# --- Additional Deployment & AI Service Files ---
+
+# Vercel and Render deployment metadata
+.vercel
+.render/
+
+# Celery / Redis artifacts (from our earlier attempts)
+celerybeat-schedule
+celerybeat.pid
+
+# Testing and Type checking caches
+.pytest_cache/
+.mypy_cache/
+
+# Additional local environment variations
+.env.production
+.env.development
+.env.*.local
+
+# FastAPI / Alembic extra cleanup
+server/alembic/versions/__pycache__/

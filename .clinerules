@@ -1,0 +1,26 @@
+AI Meeting Assistant: System Rules & Directives
+1. Security & Authentication
+    ENFORCE AUTHENTICATION: Never bypass or mock secure user authentication and authorization flows in testing. Ensure all API endpoints validating user sessions are strictly enforced before handling business logic.
+
+    CRYPTOGRAPHIC STANDARDS: When implementing token generation, encryption, or secure API keys for the LLM and bot services, strictly use established cryptographic libraries (e.g., crypto in Node). Do not use custom implementations.
+
+    SECURE SECRETS: Never hardcode API keys, secrets, or bot deployment credentials. Always use process.env and ensure .env.example is updated concurrently with any new environment variables.
+
+2. Real-Time Streaming & Bot Management
+    WEBSOCKET STABILITY: For Socket.IO/WebSocket logic, you must implement explicit error handling, connection retry logic, and fallback mechanisms for live transcript streaming. Assume connections will drop.
+
+    BOT LIFECYCLE MANAGEMENT: When interacting with Recall.ai or custom bot deployment endpoints, strictly manage the bot's state (joining, recording, leaving). You must handle edge cases, including the bot being kicked or the meeting ending abruptly.
+
+    NETWORK RESILIENCE: Wrap all network requests and API calls in robust try/catch blocks with clear, descriptive logging. If a network error occurs, the server must fail gracefully and not crash.
+
+3. Audio Processing & LLM Integration
+    TRANSLATION ROUTING: Ensure the data pipeline correctly routes Hindi or Marathi audio/transcript streams to the designated translation layer before passing data to the English-processing LLM.
+
+    STRUCTURED LLM OUTPUT: When prompting the LLM for Minutes of Meeting (MOMs) and task extraction, explicitly force strict JSON response formats so the task scheduler can reliably parse assignees and deadlines.
+
+    DATA MINIMIZATION: Only send necessary transcript chunks to the LLM for processing to optimize token usage and minimize latency.
+
+4. General Development & Workflow
+    INCREMENTAL EXECUTION: Do not attempt to build multiple major components (e.g., bot deployment, Socket.IO server, and UI) simultaneously. Complete one architectural phase entirely, verify it works, and update documentation before moving on.
+
+    CONTINUOUS DOCUMENTATION: Maintain the docs/progress.md file. You must update it whenever a core feature (like the transcription stream or the automated task scheduler) is successfully implemented and tested.

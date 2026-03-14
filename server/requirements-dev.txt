@@ -1,0 +1,58 @@
+# ── Core ──────────────────────────────────────────────────────────────────────
+fastapi==0.115.5
+uvicorn[standard]==0.32.0
+python-socketio==5.11.4
+pydantic==2.10.2
+pydantic-settings==2.7.0
+
+# ── Database ──────────────────────────────────────────────────────────────────
+sqlalchemy[asyncio]==2.0.36
+# asyncpg==0.30.0  # PostgreSQL async driver - commented for SQLite dev
+# psycopg2-binary==2.9.10  # Commented out for Windows dev - use SQLite driver
+alembic==1.14.0
+
+# ── Cache / Queue ─────────────────────────────────────────────────────────────
+redis[asyncio]==5.2.1
+celery[redis]==5.4.0
+
+# ── Auth / Security ───────────────────────────────────────────────────────────
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+bcrypt==4.0.1
+cryptography==43.0.3
+httpx==0.28.1
+python-multipart==0.0.18
+email-validator==2.2.0
+
+# ── AI Services ───────────────────────────────────────────────────────────────
+google-generativeai==0.8.3
+openai==1.58.1
+# instructor==1.7.0  # Optional
+deepl==1.21.0
+replicate==0.34.0
+
+# ── Meeting Bot ───────────────────────────────────────────────────────────────
+# recall-python-sdk==2.9.0  # Optional: Recall.ai SDK
+
+# ── Storage ───────────────────────────────────────────────────────────────────
+# boto3==1.35.83  # Optional: Cloudflare R2
+
+# ── Email ─────────────────────────────────────────────────────────────────────
+# resend==2.4.0  # Optional: Email service
+
+# ── Calendar ──────────────────────────────────────────────────────────────────
+# google-api-python-client==2.157.0  # Optional: Google Calendar
+# google-auth-httplib2==0.2.0  # Optional: Google Auth
+# google-auth-oauthlib==1.2.1  # Optional: Google OAuth
+# msgraph-sdk==1.10.0  # Optional: Microsoft Graph
+
+# ── Utilities ─────────────────────────────────────────────────────────────────
+python-dotenv==1.0.1
+structlog==24.4.0
+tenacity==9.0.0
+aiofiles==24.1.0
+
+# ── Testing ───────────────────────────────────────────────────────────────────
+pytest==8.3.4
+pytest-asyncio==0.25.2
+# httpx-mock==0.5.0  # Optional

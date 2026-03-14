@@ -1,0 +1,50 @@
+# ── Core ──────────────────────────────────────────────────────────────────────
+fastapi>=0.100.0
+pydantic>=2.8.0
+pydantic-settings
+
+# ── Database ──────────────────────────────────────────────────────────────────
+sqlalchemy[asyncio]==2.0.36
+# asyncpg==0.30.0  # PostgreSQL async driver - commented for SQLite dev
+# psycopg2-binary==2.9.10  # PostgreSQL sync driver - commented for SQLite dev
+alembic==1.14.0
+
+# ── Cache / Queue ─────────────────────────────────────────────────────────────
+redis[asyncio]==5.2.1
+celery[redis]==5.4.0
+
+# ── Auth / Security ───────────────────────────────────────────────────────────
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+bcrypt==4.0.1                    # pin: bcrypt 5.x breaks passlib's self-test on Windows
+cryptography==43.0.3             # Fernet for token encryption
+httpx==0.28.1                    # OAuth HTTP requests
+python-multipart==0.0.18         # Form data (login)
+email-validator==2.2.0           # Pydantic EmailStr validation
+
+# ── AI Services ───────────────────────────────────────────────────────────────
+google-generativeai==0.8.3       # Gemini 1.5 Pro
+openai==1.58.1                   # GPT-4o fallback + Whisper
+instructor==1.7.0                # Structured LLM output
+# deepl==1.21.0                    # Translation - optional
+
+# ── Meeting Bot ───────────────────────────────────────────────────────────────
+# recall-python-sdk==2.9.0  # Optional: Recall.ai SDK
+
+# ── Storage ───────────────────────────────────────────────────────────────────
+# boto3==1.35.83                   # S3-compatible (Cloudflare R2) - optional
+
+# ── Email ─────────────────────────────────────────────────────────────────────
+resend==2.4.0
+
+# ── Calendar ──────────────────────────────────────────────────────────────────
+google-api-python-client==2.157.0   # Google Calendar
+google-auth-httplib2==0.2.0        # Google Auth transport
+google-auth-oauthlib==1.2.1        # Google OAuth helpers
+msgraph-sdk==1.10.0                # Microsoft Graph
+
+# ── Utilities ─────────────────────────────────────────────────────────────────
+python-dotenv==1.0.1
+structlog==24.4.0
+tenacity==9.0.0                  # retry logic
+aiofiles==24.1.0
