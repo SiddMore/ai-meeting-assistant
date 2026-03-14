@@ -1,15 +1,13 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Keep our "Shields"
   typescript: {
     ignoreBuildErrors: true,
   },
   eslint: {
     ignoreDuringBuilds: true,
   },
-  
-  // THE FIX: Bundles everything correctly for Vercel
-  output: 'standalone', 
+  // We'll turn off standalone for a second to see if default works with Webpack
+  // output: 'standalone', 
 };
 
 export default nextConfig;

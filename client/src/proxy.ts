@@ -1,27 +1,35 @@
 /**
- * proxy.ts — Next.js edge proxy for protected route enforcement.
- * Checks for a NextAuth session cookie and redirects unauthenticated users to /auth/login.
+ * proxy.ts — Next.js 16 combined gateway.
+ * Merges your previous NextAuth logic with the new Proxy naming convention.
  */
-import { NextRequest, NextResponse } from "next/server"
+import { withAuth } from "next-auth/middleware";
+import { NextResponse } from "next/server";
 
-export function proxy(request: NextRequest) {
-    // NextAuth sets either of these cookies depending on whether the site uses HTTPS
-    const sessionToken =
-        request.cookies.get("next-auth.session-token")?.value ||
-        request.cookies.get("__Secure-next-auth.session-token")?.value
-
-    if (!sessionToken) {
-        const loginUrl = new URL("/auth/login", request.url)
-        loginUrl.searchParams.set("callbackUrl", request.nextUrl.pathname)
-        return NextResponse.redirect(loginUrl)
+export default withAuth(
+    function proxy(req) {
+        // This runs if the user is authorized.
+        return NextResponse.next();
+    },
+    {
+        callbacks: {
+            // This is the logic you had before: check if token exists
+            authorized: ({ token }) => !!token,
+        },
+        pages: {
+            // Your custom login page
+            signIn: "/auth/login",
+        },
     }
-
-    return NextResponse.next()
-}
+);
 
 export const config = {
+    // We've put all your important routes back on the "protected" list
     matcher: [
-        "/dashboard/:path*",
-        "/settings/:path*",
+        "/dashboard/:path*", 
+        "/meetings/:path*", 
+        "/tasks/:path*", 
+        "/moms/:path*", 
+        "/calendar/:path*", 
+        "/settings/:path*"
     ],
-}
+};
