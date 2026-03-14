@@ -44,7 +44,7 @@ export default function MeetingPage() {
     const bottomRef = useRef<HTMLDivElement>(null);
 
     // ── PHASE 1: Real-time Sync Hook ──────────────────────────────────
-    const { status: liveStatus, isConnected, socket } = useMeetingSocket(id, (session as any)?.accessToken);
+    const { status: liveStatus, isConnected, socket } = useMeetingSocket(id, (session as any)?.accessToken) as any;
 
     // Effect for initial data loading
     useEffect(() => {
