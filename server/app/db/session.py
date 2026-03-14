@@ -2,7 +2,6 @@ from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sess
 from sqlalchemy.orm import DeclarativeBase
 from app.core.config import settings
 
-# pool options for production
 engine_kwargs = {
     "pool_pre_ping": True,
     "echo": settings.DEBUG,
@@ -11,22 +10,22 @@ engine_kwargs = {
 if not settings.DATABASE_URL.startswith("sqlite"):
     engine_kwargs.update({"pool_size": 10, "max_overflow": 20})
 
-# --- THE FIX STARTS HERE ---
+# --- THE LAST MILE TWEAK ---
 db_url = settings.DATABASE_URL
+# Fixes 'postgres://' or 'postgresql://' to always use '+asyncpg'
 if db_url.startswith("postgres://"):
     db_url = db_url.replace("postgres://", "postgresql+asyncpg://", 1)
 elif db_url.startswith("postgresql://") and "+asyncpg" not in db_url:
     db_url = db_url.replace("postgresql://", "postgresql+asyncpg://", 1)
 
 engine = create_async_engine(db_url, **engine_kwargs)
-# --- THE FIX ENDS HERE ---
+# ---------------------------
 
 AsyncSessionLocal = async_sessionmaker(
     bind=engine,
     class_=AsyncSession,
     expire_on_commit=False,
 )
-
 
 class Base(DeclarativeBase):
     pass
