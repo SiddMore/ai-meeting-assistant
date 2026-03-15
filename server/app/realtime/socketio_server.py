@@ -28,13 +28,13 @@ def _meeting_room(meeting_id: str) -> str:
 # ── Server Initialization ─────────────────────────────────────────────────────
 
 def create_sio_server() -> socketio.AsyncServer:
+    # Get origins from settings or use a safe default
+    allowed_origins = settings.ALLOWED_ORIGINS 
+    
     return socketio.AsyncServer(
         async_mode="asgi",
-        # FIX: Exact match for Next.js (No wildcard '*')
-        cors_allowed_origins=[
-            "http://localhost:3000", 
-            "http://127.0.0.1:3000"
-        ], 
+        # This now uses the Vercel URL you put in your Render Dashboard
+        cors_allowed_origins=allowed_origins, 
         logger=True,
         engineio_logger=True,
         ping_interval=10,
