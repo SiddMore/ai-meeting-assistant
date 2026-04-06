@@ -5,6 +5,7 @@ from fastapi.openapi.utils import get_openapi
 from contextlib import asynccontextmanager
 import logging
 import os
+import anyio
 
 # Alembic imports for auto-migration
 from alembic.config import Config
