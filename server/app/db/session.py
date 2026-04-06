@@ -33,6 +33,13 @@ class Base(DeclarativeBase):
 
 async def init_db():
     """Create all tables on startup (dev only — use Alembic in prod)."""
+    
+    # 🚨 THE FIX: Import your models right here!
+    # Without these, SQLAlchemy doesn't know what tables to create.
+    from app.db.models.user import User
+    from app.db.models.meeting import Meeting
+    # (If you have other models like Transcript, MOM, Task, import them here too)
+
     # When running locally without a DB server (e.g. just spinning up the
     # frontend or running quick manual tests), we don't want the whole app to
     # crash if Postgres isn't available. Catch connection errors and log a
@@ -40,6 +47,7 @@ async def init_db():
     try:
         async with engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
+        print("✅ Database tables synced successfully!") # Optional: Adds a nice log
     except Exception as exc:  # pragma: no cover - hard to trigger in ci
         import logging
 
