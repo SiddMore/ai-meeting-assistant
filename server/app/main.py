@@ -20,11 +20,23 @@ from app.db import base
 from app.realtime.socketio_server import sio
 
 # ── Lifespan ──────────────────────────────────────────────────────────────────
-import anyio # Standard with FastAPI/Starlette
+from sqlalchemy import text # <--- Make sure this is imported at the top!
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # 1. Run Database Migrations in a worker thread to avoid event loop conflicts
+    # 1. Enable pgvector extension (CRITICAL FIX)
+    logging.info("Ensuring pgvector extension is enabled...")
+    try:
+        async with engine.begin() as conn:
+            # This must run before any tables are created
+            await conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
+        logging.info("pgvector extension is ready.")
+    except Exception as e:
+        # Note: On some managed DBs, you might need superuser perms, 
+        # but Render usually allows this for the owner.
+        logging.error(f"Failed to enable pgvector: {e}")
+
+    # 2. Run Database Migrations
     logging.info("Checking for database migrations...")
     try:
         ini_path = os.path.join(os.getcwd(), "alembic.ini")
@@ -34,11 +46,11 @@ async def lifespan(app: FastAPI):
             await anyio.to_thread.run_sync(command.upgrade, alembic_cfg, "head")
             logging.info("Database migrations applied successfully.")
         else:
-            logging.warning("alembic.ini not found at: " + ini_path)
+            logging.warning("alembic.ini not found.")
     except Exception as e:
         logging.error(f"Migration error: {e}")
 
-    # 2. Initialize Redis and DB
+    # 3. Initialize Redis and DB
     from app.db.session import init_db
     from app.core.redis import init_redis, close_redis
     try:
@@ -50,7 +62,7 @@ async def lifespan(app: FastAPI):
     
     yield
     
-    # 3. Cleanup
+    # 4. Cleanup
     try:
         await close_redis()
     except Exception:
