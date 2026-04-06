@@ -21,45 +21,47 @@ from app.db import base
 from app.realtime.socketio_server import sio
 
 # ── Lifespan ──────────────────────────────────────────────────────────────────
-from sqlalchemy import text # <--- Make sure this is imported at the top!
-
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # 1. Enable pgvector extension (CRITICAL FIX)
+    # 1. Enable pgvector extension
     logging.info("Ensuring pgvector extension is enabled...")
     try:
         async with engine.begin() as conn:
-            # This must run before any tables are created
             await conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
         logging.info("pgvector extension is ready.")
     except Exception as e:
-        # Note: On some managed DBs, you might need superuser perms, 
-        # but Render usually allows this for the owner.
         logging.error(f"Failed to enable pgvector: {e}")
 
-    # 2. Run Database Migrations
+    # 2. Run Database Migrations / Sync
     logging.info("Checking for database migrations...")
     try:
         ini_path = os.path.join(os.getcwd(), "alembic.ini")
         if os.path.exists(ini_path):
             alembic_cfg = Config(ini_path)
-            # Run the synchronous alembic command in a separate thread
-            await anyio.to_thread.run_sync(command.upgrade, alembic_cfg, "head")
-            logging.info("Database migrations applied successfully.")
+            
+            try:
+                # Try to upgrade normally
+                await anyio.to_thread.run_sync(command.upgrade, alembic_cfg, "head")
+                logging.info("Database migrations applied successfully.")
+            except Exception as migrate_err:
+                # If it fails because tables already exist, "Stamp" the head
+                if "already exists" in str(migrate_err):
+                    logging.info("Tables already exist. Stamping database version...")
+                    await anyio.to_thread.run_sync(command.stamp, alembic_cfg, "head")
+                    logging.info("Database version synced with Alembic.")
+                else:
+                    raise migrate_err
         else:
             logging.warning("alembic.ini not found.")
     except Exception as e:
-        logging.error(f"Migration error: {e}")
+        logging.error(f"Migration/Sync error: {e}")
 
-    # 3. Initialize Redis and DB
-    from app.db.session import init_db
+    # 3. Initialize Redis (REMOVED init_db as Alembic handles this now)
     from app.core.redis import init_redis, close_redis
     try:
         await init_redis()
     except Exception as e:
         logging.warning(f"Redis unavailable — token blocklist disabled. ({e})")
-    
-    await init_db()
     
     yield
     
