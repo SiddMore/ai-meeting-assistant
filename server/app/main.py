@@ -10,6 +10,7 @@ import anyio
 # Alembic imports for auto-migration
 from alembic.config import Config
 from alembic import command
+from sqlalchemy import text  # <--- ADD THIS LINE
 
 from app.api.routes import auth, meetings, transcripts, moms, tasks, webhooks
 from app.api.routes.calendar import integrations_router, calendar_router
