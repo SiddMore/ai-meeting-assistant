@@ -3,6 +3,12 @@ from fastapi.security import HTTPBearer
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.utils import get_openapi
 from contextlib import asynccontextmanager
+import logging
+import os
+
+# Alembic imports for auto-migration
+from alembic.config import Config
+from alembic import command
 
 from app.api.routes import auth, meetings, transcripts, moms, tasks, webhooks
 from app.api.routes.calendar import integrations_router, calendar_router
@@ -14,17 +20,37 @@ from app.db import base
 from app.realtime.socketio_server import sio
 
 # ── Lifespan ──────────────────────────────────────────────────────────────────
+import anyio # Standard with FastAPI/Starlette
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    # 1. Run Database Migrations in a worker thread to avoid event loop conflicts
+    logging.info("Checking for database migrations...")
+    try:
+        ini_path = os.path.join(os.getcwd(), "alembic.ini")
+        if os.path.exists(ini_path):
+            alembic_cfg = Config(ini_path)
+            # Run the synchronous alembic command in a separate thread
+            await anyio.to_thread.run_sync(command.upgrade, alembic_cfg, "head")
+            logging.info("Database migrations applied successfully.")
+        else:
+            logging.warning("alembic.ini not found at: " + ini_path)
+    except Exception as e:
+        logging.error(f"Migration error: {e}")
+
+    # 2. Initialize Redis and DB
     from app.db.session import init_db
     from app.core.redis import init_redis, close_redis
     try:
         await init_redis()
     except Exception as e:
-        import logging
         logging.warning(f"Redis unavailable — token blocklist disabled. ({e})")
+    
     await init_db()
+    
     yield
+    
+    # 3. Cleanup
     try:
         await close_redis()
     except Exception:
@@ -32,13 +58,12 @@ async def lifespan(app: FastAPI):
     await engine.dispose()
 
 # ── FastAPI app ───────────────────────────────────────────────────────────────
-# ONLY ONE app = FastAPI() call here
 app = FastAPI(
     title="AI Meeting Assistant API",
     version="1.0.0",
     docs_url="/api/docs",
     redoc_url="/api/redoc",
-    openapi_url="/api/openapi.json", # This must match what Swagger expects
+    openapi_url="/api/openapi.json",
     lifespan=lifespan,
     swagger_ui_parameters={"persistAuthorization": True}
 )
@@ -51,7 +76,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Define the security scheme for the "Authorize" button
 security = HTTPBearer()
 
 def custom_openapi():
@@ -65,7 +89,6 @@ def custom_openapi():
         routes=app.routes,
     )
     
-    # This block specifically adds the "Authorize" lock icon to Swagger
     openapi_schema["components"]["securitySchemes"] = {
         "Bearer": {
             "type": "http",
@@ -82,16 +105,16 @@ app.openapi = custom_openapi
 
 # ── Routers ───────────────────────────────────────────────────────────────────
 API_PREFIX = "/api/v1"
-app.include_router(auth.router,            prefix=f"{API_PREFIX}/auth",        tags=["auth"])
-app.include_router(meetings.router,        prefix=f"{API_PREFIX}/meetings",    tags=["meetings"])
-app.include_router(transcripts.router,     prefix=f"{API_PREFIX}/transcripts", tags=["transcripts"])
-app.include_router(moms.router,            prefix=f"{API_PREFIX}/moms",        tags=["moms"])
-app.include_router(tasks.router,           prefix=f"{API_PREFIX}/tasks",       tags=["tasks"])
-app.include_router(integrations_router,    prefix=API_PREFIX,                  tags=["calendar-integrations"])
-app.include_router(calendar_router,        prefix=API_PREFIX,                  tags=["calendar"])
-app.include_router(webhooks.router,        prefix=f"{API_PREFIX}/webhooks",    tags=["webhooks"])
-app.include_router(bot_ingest.router,      prefix=f"{API_PREFIX}/bot",         tags=["bot-ingest"])
-app.include_router(simulate.router,        prefix=f"{API_PREFIX}/simulate",    tags=["simulate (dev)"])
+app.include_router(auth.router,             prefix=f"{API_PREFIX}/auth",        tags=["auth"])
+app.include_router(meetings.router,         prefix=f"{API_PREFIX}/meetings",    tags=["meetings"])
+app.include_router(transcripts.router,      prefix=f"{API_PREFIX}/transcripts", tags=["transcripts"])
+app.include_router(moms.router,             prefix=f"{API_PREFIX}/moms",        tags=["moms"])
+app.include_router(tasks.router,            prefix=f"{API_PREFIX}/tasks",       tags=["tasks"])
+app.include_router(integrations_router,     prefix=API_PREFIX,                  tags=["calendar-integrations"])
+app.include_router(calendar_router,         prefix=API_PREFIX,                  tags=["calendar"])
+app.include_router(webhooks.router,         prefix=f"{API_PREFIX}/webhooks",    tags=["webhooks"])
+app.include_router(bot_ingest.router,       prefix=f"{API_PREFIX}/bot",         tags=["bot-ingest"])
+app.include_router(simulate.router,         prefix=f"{API_PREFIX}/simulate",    tags=["simulate (dev)"])
 
 # ── Mount Socket.IO ───────────────────────────────────────────────────────────
 import socketio
