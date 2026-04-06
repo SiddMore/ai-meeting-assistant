@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
@@ -39,7 +39,12 @@ const PLATFORM_LABELS: Record<string, string> = {
 export default function DashboardPage() {
     const router = useRouter();
     const { data: session, status } = useSession();
-    const api = createApiClient((session as any)?.accessToken);
+    
+    // FIX INTEGRATED: Re-create the API client only when the session actually updates
+    const api = useMemo(() => {
+        return createApiClient((session as any)?.accessToken);
+    }, [session]);
+
     const [meetings, setMeetings] = useState<MeetingListItem[]>([]);
     const [loadingMeetings, setLoadingMeetings] = useState(true);
 
@@ -50,15 +55,14 @@ export default function DashboardPage() {
             return;
         }
 
-        // Wait until session is fully ready
-        if (!session) return;
+        // Wait until session and the token are fully ready
+        if (!session || !(session as any).accessToken) return;
 
         api.meetings.list()
             .then(setMeetings)
             .catch((e) => toast.error(e.message || "Failed to load meetings"))
             .finally(() => setLoadingMeetings(false));
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [session, status]);
+    }, [session, status, api]); // Updated dependency array
 
 
 

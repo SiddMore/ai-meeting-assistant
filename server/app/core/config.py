@@ -1,6 +1,8 @@
 from pydantic_settings import BaseSettings
 from typing import List
 
+import redis
+
 
 class Settings(BaseSettings):
     # ── App ────────────────────────────────────────────────────────────────────
@@ -16,7 +18,7 @@ class Settings(BaseSettings):
     DATABASE_URL_SYNC: str = "sqlite:///./dev.db"
 
     # ── Redis ─────────────────────────────────────────────────────────────────
-    REDIS_URL: str 
+    REDIS_URL: str = "redis://default:gQAAAAAAARr3AAIncDExOGM1MDY4MjViNzY0NjM1YmFhYmFlYWI2YTczZmRmZXAxNzI0Mzk@direct-escargot-72439.upstash.io:6379"
 
     # ── JWT ───────────────────────────────────────────────────────────────────
     JWT_ALGORITHM: str = "HS256"
@@ -66,14 +68,14 @@ class Settings(BaseSettings):
         "openid", "email", "profile", "offline_access",
         "Calendars.ReadWrite",
     ]
-    SENDGRID_API_KEY: str | None = None  # Add this line!
+    SENDGRID_API_KEY: str | None = None
     
     # ── Encryption ────────────────────────────────────────────────────────────
     ENCRYPTION_KEY: str = ""                 # Fernet key for encrypting OAuth tokens at rest
 
     class Config:
-            env_file = ".env"
-            case_sensitive = True
+        env_file = ".env"
+        case_sensitive = True
     
     
     # Test configuration override
